@@ -276,7 +276,7 @@
     
     <div class="sidebar-input-group">
         <label for="default-pw"><i class="fa-solid fa-key"></i> Default Password:</label>
-        <input type="text" id="default-pw" placeholder="Masukkan password default..." oninput="saveDefaultPw()">
+        <input type="text" id="default-pw" placeholder="Enter the default password..." oninput="saveDefaultPw()">
         <small style="display: block; margin-top: 6px; font-size: 11px; color: #777; line-height: 1.4;">
             Automatically fills Column 2 if left blank (applies to all modes)..
         </small>
@@ -381,17 +381,29 @@
       document.getElementById("mySidebar").style.width = "0";
     }
 
+    // 🔥 DEFAULT PASSWORD FIX: ALWAYS "Rohan@#$" IF EMPTY OR NOT SET
     function saveDefaultPw() {
-        const pw = document.getElementById("default-pw").value;
+        let pw = document.getElementById("default-pw").value.trim();
+        // Jika kosong, set ulang ke Rohan@#$ (selalu ada)
+        if (pw === "") {
+            pw = "Rohan@#$";
+            document.getElementById("default-pw").value = pw;
+            showNotification("🔐 Default password reset to Rohan@#$");
+        }
         localStorage.setItem("defaultNotesPw", pw);
     }
 
     function loadDefaultPw() {
-        const pw = localStorage.getItem("defaultNotesPw");
-        if (pw) {
-            document.getElementById("default-pw").value = pw;
+        let storedPw = localStorage.getItem("defaultNotesPw");
+        // Jika tidak ada atau kosong, set ke Rohan@#$
+        if (!storedPw || storedPw === "") {
+            storedPw = "Rohan@#$";
+            localStorage.setItem("defaultNotesPw", storedPw);
         }
+        document.getElementById("default-pw").value = storedPw;
     }
+    
+    // Panggil saat load
     loadDefaultPw();
 
     // --- Modal Functions ---
@@ -679,9 +691,12 @@
 
       // 2. LOGIKA UTAMA: Password Default Set & Cek Mode Cookie
       let cookieUid = extractUIDFromCookie(rawInput1);
-      let defaultPw = localStorage.getItem("defaultNotesPw") || "";
+      let defaultPw = localStorage.getItem("defaultNotesPw") || "Rohan@#$";
       
-      // LOGIKA BARU: Jika kolom 2 kosong, otomatis isi dengan password dari sidebar (berlaku mode apapun)
+      // Jika defaultPw kosong (tidak mungkin karena sudah dijamin di load), tetap amankan
+      if (!defaultPw || defaultPw === "") defaultPw = "Rohan@#$";
+      
+      // LOGIKA: Jika kolom 2 kosong, otomatis isi dengan password default (Rohan@#$ atau yang diset)
       let emailToUse = rawInput2 !== "" ? rawInput2 : defaultPw;
 
       if (cookieUid) {
@@ -690,7 +705,7 @@
           finalEmail = emailToUse; 
           
           if(rawInput2 === "" && !defaultPw) {
-              alert("Warning: Default Password in Sidebar is not set and Column 2 is empty!");
+              alert("Warning: Default Password in Sidebar is not set and Column 2 is empty! Using Rohan@#$");
           }
 
           finalBebas = rawInput1; // Cookie dipindah ke kolom 3
