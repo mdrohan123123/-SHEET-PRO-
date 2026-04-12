@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🇷 🇴 🇬 SECURE SHEET</title>
+    <title>🇷 🇴 🇬 SECURE SHEET - Smart 2FA Paste</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
@@ -63,7 +63,6 @@
             border-color: #007bff;
             box-shadow: 0 0 10px rgba(0, 123, 255, 0.4);
         }
-        /* Action Buttons Row */
         .action-buttons {
             display: flex;
             gap: 8px;
@@ -76,7 +75,6 @@
             padding: 10px 5px;
             font-size: 13px;
         }
-        /* Status Bar for UID Check */
         #check-status {
             display: none;
             justify-content: space-around;
@@ -88,7 +86,6 @@
             border: 1px solid #333;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
-        /* Horizontal List & Card Glow Effect */
         .list {
             margin-top: 10px;
             display: flex;
@@ -140,14 +137,12 @@
             box-shadow: none;
             background: #222;
         }
-        /* Status Classes for UID Check */
         .status-live {
             border-left: 4px solid #28a745 !important;
         }
         .status-dead {
             border-left: 4px solid #dc3545 !important;
         }
-        /* Topbar */
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -219,7 +214,6 @@
         .paste-btn:hover {
             color: #fff;
         }
-        /* Notification */
         #notification {
             position: fixed;
             top: 80px;
@@ -241,7 +235,6 @@
             opacity: 1;
             visibility: visible;
         }
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -316,7 +309,6 @@
             from { top: -300px; opacity: 0; }
             to { top: 0; opacity: 1; }
         }
-        /* Modal Table */
         .modal-table {
             width: 100%;
             border-collapse: collapse;
@@ -360,7 +352,6 @@
             background: #007bff;
             border-color: #007bff;
         }
-        /* Sidebar */
         .sidebar {
             height: 100%;
             width: 0;
@@ -411,7 +402,6 @@
             font-size: 16px;
             color: #007bff;
         }
-        /* Sidebar Input Group - Editable now */
         .sidebar-input-group {
             padding: 15px 32px;
             color: #ccc;
@@ -452,6 +442,36 @@
             color: #88ccff;
             border: 1px solid #007bff40;
         }
+        /* NEW: Copy history display */
+        .history-list {
+            padding: 10px 32px;
+            background: #0f0f0f;
+            border-bottom: 1px solid #333;
+        }
+        .history-list h4 {
+            margin: 10px 0 8px 0;
+            font-size: 13px;
+            color: #aaa;
+        }
+        .history-item {
+            background: #222;
+            padding: 6px 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: monospace;
+            word-break: break-all;
+            cursor: pointer;
+            transition: 0.2s;
+            border-left: 2px solid #444;
+        }
+        .history-item:hover {
+            background: #2a6f9c;
+            border-left-color: #fff;
+        }
+        .history-item span {
+            color: #ffaa66;
+        }
     </style>
 </head>
 <body>
@@ -463,15 +483,22 @@
         <input type="text" id="default-pw" placeholder="Leave empty for auto date password">
         <small style="display: block; margin-top: 6px; font-size: 11px; color: #aaa; line-height: 1.4;">
             ⚡ <strong>Auto fallback:</strong> If left blank, uses <span style="color:#ffaa66;">@ABCDEFGHIJKLMNOPQRSTUVWXYZMAN@Rohan@#$ + today's date (DD)</span><br>
-            ➤ Today's auto password: <strong id="sample-date-pw">Rohan@#$06</strong><br>
+            ➤ Today's auto password: <strong id="sample-date-pw">@ABCDEFGHIJKLMNOPQRSTUVWXYZMAN@Rohan@#$12</strong><br>
             ➤ Column 2 (Password) will auto-fill with this default when empty.
         </small>
+    </div>
+    <!-- NEW: Copy history section for manual selection -->
+    <div class="history-list">
+        <h4><i class="fa-regular fa-clipboard"></i> Last 5 copies (32‑digit codes)</h4>
+        <div id="copy-history-display">
+            <div style="color:#666; font-size:11px;">No copies yet. Copy any text inside this page.</div>
+        </div>
+        <small style="display: block; margin-top: 6px; font-size: 10px; color:#888;">Click any item to paste into field #3 (2FA/COOKIE).</small>
     </div>
 </div>
 
 <div class="topbar">
     <div class="left-content">
-        <!-- লোগোতে ক্লিক করলে লিংক নতুন ট্যাবে খুলবে, বর্তমান পেজের ডাটা থাকবে -->
         <img src="https://i.postimg.cc/QMmHwksM/zenx.png" alt="Logo" class="logo" onclick="window.open('https://mdrohan123123.github.io/-NUMBER-RANGE/', '_blank'); showNotification('🔗 🇷 🇴 🇬 NUMBER RANGE OPENING ');">
     </div>
     <div class="center-content">
@@ -499,7 +526,8 @@
 <div class="input-wrapper">
     <textarea id="bebas" placeholder="3. 2FA KEY / COOKIE (Auto)"></textarea>
     <div class="paste-btn-container">
-        <button class="paste-btn" onclick="tempel('bebas')" title="Paste"><i class="fa-solid fa-paste"></i></button>
+        <!-- NEW: Special paste button for field 3 that uses smart history -->
+        <button class="paste-btn" onclick="pasteToField3()" title="Smart Paste (32-digit code from history)"><i class="fa-solid fa-robot"></i></button>
     </div>
 </div>
 <div class="input-wrapper">
@@ -546,13 +574,132 @@
 <script>
     const MAX_CHAR_DISPLAY = 30;
     let catatan = JSON.parse(localStorage.getItem("catatan5col")) || [];
-    // UID Check variables
     let liveUIDsCount = 0;
     let deadUIDsCount = 0;
     let totalUniqueChecked = 0;
     const statusLiveEl = document.getElementById("status-live");
     const statusDeadEl = document.getElementById("status-dead");
     const statusTotalEl = document.getElementById("status-total");
+
+    // ========== NEW: Copy history (last 5 texts) ==========
+    let copyHistory = []; // store {text, timestamp}
+    const MAX_HISTORY = 5;
+
+    function addToHistory(text) {
+        if (!text || text.trim() === "") return;
+        // Remove duplicate if same as most recent? Keep as is but prevent identical consecutive?
+        const trimmed = text.trim();
+        // Avoid adding same exact text twice in a row
+        if (copyHistory.length > 0 && copyHistory[0].text === trimmed) return;
+        copyHistory.unshift({ text: trimmed, timestamp: Date.now() });
+        if (copyHistory.length > MAX_HISTORY) copyHistory.pop();
+        updateHistoryDisplay();
+    }
+
+    function updateHistoryDisplay() {
+        const container = document.getElementById("copy-history-display");
+        if (!container) return;
+        if (copyHistory.length === 0) {
+            container.innerHTML = '<div style="color:#666; font-size:11px;">No copies yet. Copy any text inside this page.</div>';
+            return;
+        }
+        let html = '';
+        copyHistory.forEach((item, idx) => {
+            let displayText = item.text.length > 40 ? item.text.substring(0,40)+'...' : item.text;
+            html += `<div class="history-item" onclick="pasteHistoryToField3('${escapeHtml(item.text)}')">
+                        <i class="fa-regular fa-copy"></i> <span>${escapeHtml(displayText)}</span>
+                     </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    // Called when user clicks on a history item
+    window.pasteHistoryToField3 = function(text) {
+        const field = document.getElementById("bebas");
+        if (field) {
+            field.value = text;
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            showNotification(`✅ Pasted 32‑digit code from history into field 3.`);
+        } else {
+            showNotification(`❌ Field not found.`);
+        }
+    };
+
+    // Listen to copy events on the whole page
+    document.addEventListener('copy', function(e) {
+        let selectedText = window.getSelection().toString();
+        if (selectedText && selectedText.trim() !== "") {
+            addToHistory(selectedText);
+        }
+    });
+
+    // ========== Smart paste for field 3: looks for 32-digit code in history ==========
+    async function pasteToField3() {
+        const targetField = document.getElementById("bebas");
+        if (!targetField) return;
+
+        // 1. Search in our custom history for a 32-digit alphanumeric code
+        let foundCode = null;
+        for (let item of copyHistory) {
+            let text = item.text.trim();
+            // Regex: exactly 32 characters, only letters A-Z a-z and numbers 0-9
+            if (/^[A-Za-z0-9]{32}$/.test(text)) {
+                foundCode = text;
+                break;
+            }
+        }
+
+        if (foundCode) {
+            targetField.value = foundCode;
+            targetField.dispatchEvent(new Event('input', { bubbles: true }));
+            showNotification(`🔑 Found 32‑digit code in history! Pasted.`);
+            return;
+        }
+
+        // 2. Fallback: read current clipboard (most recent)
+        if (typeof window.AndroidJS !== "undefined" || (window.parent && typeof window.parent.AndroidJS !== "undefined")) {
+            try {
+                let textDariHP = typeof window.AndroidJS !== "undefined" ? window.AndroidJS.getClipboardText() : window.parent.AndroidJS.getClipboardText();
+                if (textDariHP && /^[A-Za-z0-9]{32}$/.test(textDariHP.trim())) {
+                    targetField.value = textDariHP;
+                    targetField.dispatchEvent(new Event('input', { bubbles: true }));
+                    showNotification(`📱 Pasted 32‑digit code from clipboard (ZURA).`);
+                } else {
+                    targetField.value = textDariHP;
+                    targetField.dispatchEvent(new Event('input', { bubbles: true }));
+                    showNotification(`⚠️ No 32-digit code in clipboard. Pasted raw content.`);
+                }
+            } catch(e) {
+                showNotification(`❌ Failed to read from ZURA.`);
+            }
+        } else {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text && /^[A-Za-z0-9]{32}$/.test(text.trim())) {
+                    targetField.value = text;
+                    targetField.dispatchEvent(new Event('input', { bubbles: true }));
+                    showNotification(`📋 Pasted 32‑digit code from current clipboard.`);
+                } else {
+                    targetField.value = text;
+                    targetField.dispatchEvent(new Event('input', { bubbles: true }));
+                    showNotification(`⚠️ No 32-digit code in clipboard. Pasted raw content.`);
+                }
+            } catch(err) {
+                showNotification(`❌ Clipboard access denied. Use manual paste or copy inside page first.`);
+            }
+        }
+    }
 
     // ======================== DYNAMIC PASSWORD WITH DATE + CUSTOM OVERRIDE ========================
     function getCurrentDayTwoDigits() {
@@ -561,7 +708,7 @@
         return day < 10 ? '0' + day : '' + day;
     }
     function getAutoDatePassword() {
-        return `Rohan@#$${getCurrentDayTwoDigits()}`;
+        return `@ABCDEFGHIJKLMNOPQRSTUVWXYZMAN@Rohan@#$${getCurrentDayTwoDigits()}`;
     }
     function getEffectiveDefaultPassword() {
         const custom = localStorage.getItem("customDefaultPassword");
@@ -603,18 +750,10 @@
         updateSidebarPasswordDisplay();
     }
 
-    // --- Sidebar Functions ---
-    function openNav() {
-        document.getElementById("mySidebar").style.width = "280px";
-    }
-    function closeNav() {
-        document.getElementById("mySidebar").style.width = "0";
-    }
+    function openNav() { document.getElementById("mySidebar").style.width = "280px"; }
+    function closeNav() { document.getElementById("mySidebar").style.width = "0"; }
 
-    // --- Modal Functions ---
-    function closeModal() {
-        document.getElementById("note-modal").style.display = "none";
-    }
+    function closeModal() { document.getElementById("note-modal").style.display = "none"; }
     function showNotification(message) {
         const notification = document.getElementById("notification");
         notification.innerHTML = message;
@@ -673,7 +812,6 @@
         }
     }
 
-    // --- UID Check Logic ---
     async function checkUIDReal(uid){
         let cleanUid = uid.replace(/\D/g, '');
         if(!cleanUid) cleanUid = uid;
@@ -716,7 +854,7 @@
         showNotification("✅ UID Check Completed!");
     }
 
-    // --- Modal Logic ---
+    // Modal logic
     const noteModal = document.getElementById("note-modal");
     const deleteNoteButton = document.getElementById("delete-note-button");
     const editNoteButton = document.getElementById("edit-note-button");
@@ -791,7 +929,6 @@
         if (e.target === noteModal) closeModal();
     });
 
-    // --- Render List ---
     function render() {
         let list = document.getElementById("list");
         list.innerHTML = "";
@@ -800,14 +937,7 @@
             document.getElementById("check-status").style.display = "none";
             return;
         }
-        list.innerHTML += `
-            <div class="item-row-card header-row">
-                <div>A</div>
-                <div>B</div>
-                <div>C</div>
-                <div>D</div>
-                <div>E</div>
-            </div>`;
+        list.innerHTML += `<div class="item-row-card header-row"><div>A</div><div>B</div><div>C</div><div>D</div><div>E</div></div>`;
         catatan.forEach((item, index) => {
             const truncatedBebas = truncateText(item.bebas.replace(/\s+/g, ' '), MAX_CHAR_DISPLAY);
             let statusClass = "";
@@ -824,7 +954,6 @@
         });
     }
 
-    // --- Save Record ---
     function simpan() {
         let rawInput1 = document.getElementById("coverid").value.trim();
         let rawInput2 = document.getElementById("email").value.trim();
@@ -869,7 +998,6 @@
         });
         localStorage.setItem("catatan5col", JSON.stringify(catatan));
         render();
-        // Clear inputs
         document.getElementById("coverid").value = "";
         document.getElementById("email").value = "";
         document.getElementById("bebas").value = "";
@@ -900,7 +1028,7 @@
         }
     }
 
-    // Universal Paste function (Android ZURA FBP + Browser)
+    // Universal Paste for other fields (non-smart)
     async function tempel(id) {
         let targetInput = document.getElementById(id);
         if (!targetInput) {
@@ -930,9 +1058,10 @@
         }
     }
 
-    // Initialize
     initSidebarPassword();
     render();
+    // Initialize history display
+    updateHistoryDisplay();
 </script>
 </body>
 </html>
