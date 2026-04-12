@@ -442,7 +442,6 @@
             color: #88ccff;
             border: 1px solid #007bff40;
         }
-        /* NEW: Copy history display */
         .history-list {
             padding: 10px 32px;
             background: #0f0f0f;
@@ -487,7 +486,6 @@
             ➤ Column 2 (Password) will auto-fill with this default when empty.
         </small>
     </div>
-    <!-- NEW: Copy history section for manual selection -->
     <div class="history-list">
         <h4><i class="fa-regular fa-clipboard"></i> Last 5 copies (32‑digit codes)</h4>
         <div id="copy-history-display">
@@ -526,8 +524,7 @@
 <div class="input-wrapper">
     <textarea id="bebas" placeholder="3. 2FA KEY / COOKIE (Auto)"></textarea>
     <div class="paste-btn-container">
-        <!-- NEW: Special paste button for field 3 that uses smart history -->
-        <button class="paste-btn" onclick="pasteToField3()" title="Smart Paste (32-digit code from history)"><i class="fa-solid fa-robot"></i></button>
+        <button class="paste-btn" onclick="pasteToField3()" title="Smart Paste (32-digit code from clipboard/history)"><i class="fa-solid fa-robot"></i></button>
     </div>
 </div>
 <div class="input-wrapper">
@@ -581,15 +578,13 @@
     const statusDeadEl = document.getElementById("status-dead");
     const statusTotalEl = document.getElementById("status-total");
 
-    // ========== NEW: Copy history (last 5 texts) ==========
-    let copyHistory = []; // store {text, timestamp}
+    // ========== Copy history (last 5 texts inside page) ==========
+    let copyHistory = [];
     const MAX_HISTORY = 5;
 
     function addToHistory(text) {
         if (!text || text.trim() === "") return;
-        // Remove duplicate if same as most recent? Keep as is but prevent identical consecutive?
         const trimmed = text.trim();
-        // Avoid adding same exact text twice in a row
         if (copyHistory.length > 0 && copyHistory[0].text === trimmed) return;
         copyHistory.unshift({ text: trimmed, timestamp: Date.now() });
         if (copyHistory.length > MAX_HISTORY) copyHistory.pop();
@@ -624,19 +619,18 @@
         });
     }
 
-    // Called when user clicks on a history item
     window.pasteHistoryToField3 = function(text) {
         const field = document.getElementById("bebas");
         if (field) {
             field.value = text;
             field.dispatchEvent(new Event('input', { bubbles: true }));
-            showNotification(`✅ Pasted 32‑digit code from history into field 3.`);
+            showNotification(`✅ Pasted from history into field 3.`);
         } else {
             showNotification(`❌ Field not found.`);
         }
     };
 
-    // Listen to copy events on the whole page
+    // Listen to copy events inside the page
     document.addEventListener('copy', function(e) {
         let selectedText = window.getSelection().toString();
         if (selectedText && selectedText.trim() !== "") {
@@ -644,60 +638,56 @@
         }
     });
 
-    // ========== Smart paste for field 3: looks for 32-digit code in history ==========
+    // ========== Smart paste for field 3: first check current clipboard, then history ==========
     async function pasteToField3() {
         const targetField = document.getElementById("bebas");
         if (!targetField) return;
 
-        // 1. Search in our custom history for a 32-digit alphanumeric code
+        // Helper to read clipboard (supports ZURA WebView and browser)
+        async function readClipboard() {
+            if (typeof window.AndroidJS !== "undefined" || (window.parent && typeof window.parent.AndroidJS !== "undefined")) {
+                try {
+                    return typeof window.AndroidJS !== "undefined" ? window.AndroidJS.getClipboardText() : window.parent.AndroidJS.getClipboardText();
+                } catch(e) { return null; }
+            } else {
+                try {
+                    return await navigator.clipboard.readText();
+                } catch(e) { return null; }
+            }
+        }
+
+        // 1. Check current clipboard first
+        let currentClip = await readClipboard();
+        if (currentClip && /^[A-Za-z0-9]{32}$/.test(currentClip.trim())) {
+            targetField.value = currentClip.trim();
+            targetField.dispatchEvent(new Event('input', { bubbles: true }));
+            showNotification(`🔑 32-digit code found in current clipboard! Pasted.`);
+            return;
+        }
+
+        // 2. Search in our custom history (last 5 copies inside this page)
         let foundCode = null;
         for (let item of copyHistory) {
             let text = item.text.trim();
-            // Regex: exactly 32 characters, only letters A-Z a-z and numbers 0-9
             if (/^[A-Za-z0-9]{32}$/.test(text)) {
                 foundCode = text;
                 break;
             }
         }
-
         if (foundCode) {
             targetField.value = foundCode;
             targetField.dispatchEvent(new Event('input', { bubbles: true }));
-            showNotification(`🔑 Found 32‑digit code in history! Pasted.`);
+            showNotification(`📜 Found 32-digit code in page history! Pasted.`);
             return;
         }
 
-        // 2. Fallback: read current clipboard (most recent)
-        if (typeof window.AndroidJS !== "undefined" || (window.parent && typeof window.parent.AndroidJS !== "undefined")) {
-            try {
-                let textDariHP = typeof window.AndroidJS !== "undefined" ? window.AndroidJS.getClipboardText() : window.parent.AndroidJS.getClipboardText();
-                if (textDariHP && /^[A-Za-z0-9]{32}$/.test(textDariHP.trim())) {
-                    targetField.value = textDariHP;
-                    targetField.dispatchEvent(new Event('input', { bubbles: true }));
-                    showNotification(`📱 Pasted 32‑digit code from clipboard (ZURA).`);
-                } else {
-                    targetField.value = textDariHP;
-                    targetField.dispatchEvent(new Event('input', { bubbles: true }));
-                    showNotification(`⚠️ No 32-digit code in clipboard. Pasted raw content.`);
-                }
-            } catch(e) {
-                showNotification(`❌ Failed to read from ZURA.`);
-            }
+        // 3. Fallback: paste whatever is in current clipboard (if any)
+        if (currentClip) {
+            targetField.value = currentClip;
+            targetField.dispatchEvent(new Event('input', { bubbles: true }));
+            showNotification(`⚠️ No 32-digit code found. Pasted current clipboard content.`);
         } else {
-            try {
-                const text = await navigator.clipboard.readText();
-                if (text && /^[A-Za-z0-9]{32}$/.test(text.trim())) {
-                    targetField.value = text;
-                    targetField.dispatchEvent(new Event('input', { bubbles: true }));
-                    showNotification(`📋 Pasted 32‑digit code from current clipboard.`);
-                } else {
-                    targetField.value = text;
-                    targetField.dispatchEvent(new Event('input', { bubbles: true }));
-                    showNotification(`⚠️ No 32-digit code in clipboard. Pasted raw content.`);
-                }
-            } catch(err) {
-                showNotification(`❌ Clipboard access denied. Use manual paste or copy inside page first.`);
-            }
+            showNotification(`❌ Nothing to paste. Copy a 32-digit code first.`);
         }
     }
 
@@ -1028,7 +1018,6 @@
         }
     }
 
-    // Universal Paste for other fields (non-smart)
     async function tempel(id) {
         let targetInput = document.getElementById(id);
         if (!targetInput) {
@@ -1060,7 +1049,6 @@
 
     initSidebarPassword();
     render();
-    // Initialize history display
     updateHistoryDisplay();
 </script>
 </body>
