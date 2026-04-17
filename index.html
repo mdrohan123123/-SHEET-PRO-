@@ -481,8 +481,8 @@
         <label for="default-pw"><i class="fa-solid fa-key"></i> 🔐 DEFAULT PASSWORD (EDITABLE)</label>
         <input type="text" id="default-pw" placeholder="Leave empty for auto date password">
         <small style="display: block; margin-top: 6px; font-size: 11px; color: #aaa; line-height: 1.4;">
-            ⚡ <strong>Auto fallback:</strong> If left blank, uses <span style="color:#ffaa66;">@Rohan@#$ + today's date (DD)</span><br>
-            ➤ Today's auto password: <strong id="sample-date-pw">@Rohan@#$</strong><br>
+            ⚡ <strong>Auto fallback:</strong> If left blank, uses <span style="color:#ffaa66;">Rohan@#$ + today's date (DD)</span><br>
+            ➤ Today's auto password: <strong id="sample-date-pw">Rohan@#$</strong><br>
             ➤ Column 2 (Password) will auto-fill with this default when empty.
         </small>
     </div>
@@ -698,7 +698,7 @@
         return day < 10 ? '0' + day : '' + day;
     }
     function getAutoDatePassword() {
-        return `@Rohan@#$${getCurrentDayTwoDigits()}`;
+        return `Rohan@#$${getCurrentDayTwoDigits()}`;
     }
     function getEffectiveDefaultPassword() {
         const custom = localStorage.getItem("customDefaultPassword");
